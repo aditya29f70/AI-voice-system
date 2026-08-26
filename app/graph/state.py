@@ -4,7 +4,6 @@ from langchain_core.messages import BaseMessage
 
 
 class LeadInfo(TypedDict):
-    language: Optional[str]
 
     what_they_sell: Optional[str]
     budget: Optional[str]
@@ -12,6 +11,7 @@ class LeadInfo(TypedDict):
     timeline: Optional[str]
     features: list[str]
 
+    confirmed: bool
     intent: Optional[Literal["hot", "warm", "cold"]]
 
 
@@ -31,6 +31,8 @@ class ActionState(TypedDict):
 class VoiceCallState(TypedDict):
     # Conversation
     messages: Annotated[list[BaseMessage], add_messages]
+
+    language: Optional[str]
 
     # Call information
     customer_phone: str 
