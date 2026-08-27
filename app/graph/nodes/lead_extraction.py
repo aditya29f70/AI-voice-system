@@ -191,7 +191,7 @@ Extract the following:
 """
 
 
-def lead_extraction(state):
+async def lead_extraction(state):
 
     parser= PydanticOutputParser(pydantic_object=LeadExtractor)
 
@@ -205,7 +205,7 @@ def lead_extraction(state):
 
     lead_chain= prompt|llm|parser
 
-    lead_output= lead_chain.invoke({"current_date": today, "language":state['language'], "conversation_history": conversation_history, "current_transcript": state['current_transcript']})
+    lead_output= await lead_chain.ainvoke({"current_date": today, "language":state['language'], "conversation_history": conversation_history, "current_transcript": state['current_transcript']})
 
 
     return {

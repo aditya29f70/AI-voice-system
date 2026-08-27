@@ -20,12 +20,11 @@ class CallbackInfo(TypedDict):
     date: Optional[str]
     time: Optional[str]
     timezone: Optional[str]
-    scheduled: bool
 
 class ActionState(TypedDict):
     whatsapp_sent_mid_call: bool
     callback_scheduled: bool
-    followup_sent: bool
+
 
 
 class VoiceCallState(TypedDict):
