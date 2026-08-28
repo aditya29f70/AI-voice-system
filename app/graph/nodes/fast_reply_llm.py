@@ -177,7 +177,14 @@ async def fast_reply_llm(state):
 
 
 init_state={
-    "messages":[AIMessage(content="how can i assist you today?"), HumanMessage(content="hello, i want to build an ecommerace website. I sell cloth, and i have 300 products . my budget is around 5 thousand")]
+    "messages":[AIMessage(content="how can i assist you today?"), HumanMessage(content="hello, i want to build an ecommerace website. I sell cloth, and i have 300 products . my budget is around 5 thousand")],
+    "current_transcript": "hello, i want to build an ecommerace website. I sell cloth, and i have 300 products . my budget is around 5 thousand"
 }
 
-print(fast_reply_llm(init_state))
+async def main():
+    result= await fast_reply_llm(init_state)
+
+    print(result)
+
+if __name__=="__main__":
+    asyncio.run(main())

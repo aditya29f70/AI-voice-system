@@ -34,3 +34,17 @@ scipy
 
 nvidia-cublas-cu12
 nvidia-cudnn-cu12
+
+flask
+twilio
+
+
+flask-sock
+simple-websocket
+faster-whisper
+audioop-lts
+python-dotenv
+websocket-client
+
+
+

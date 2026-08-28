@@ -31,7 +31,7 @@ class VoiceCallState(TypedDict):
     # Conversation
     messages: Annotated[list[BaseMessage], add_messages]
 
-    language: Optional[str]
+    # language: Optional[str]
 
     # Call information
     customer_phone: str 
@@ -54,6 +54,13 @@ class VoiceCallState(TypedDict):
 
     # Control
     should_continue: bool
+
+
+class LeadExecutionState(TypedDict):
+    # Conversation
+    messages: Annotated[list[BaseMessage], add_messages]
+
+    language: Optional[str]
 
 
 
