@@ -1,7 +1,7 @@
 from langchain_ollama import ChatOllama
 
 llm= ChatOllama(
-    model= "minimax-m3:cloud",
+    model= "gemma4:31b-cloud",
     temperature=0.2
 )
 

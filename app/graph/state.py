@@ -36,10 +36,35 @@ class VoiceCallState(TypedDict):
     # Call information
     customer_phone: str 
     my_phone: str 
-    call_active: bool
+    # call_active: bool
 
     # Current interaction
     current_audio: Optional[bytes]
+    current_transcript: Optional[str]
+    current_response: Optional[str]
+
+    # # Lead
+    # lead: LeadInfo
+
+    # # Callback
+    # callback: CallbackInfo
+
+    # # Action
+    # actions: ActionState
+
+    # Control
+    should_continue: bool
+
+
+class LeadExecutionState(TypedDict):
+    # Conversation
+    messages: list[BaseMessage]
+
+    language: Optional[str]
+
+    customer_phone: str 
+    my_phone: str 
+
     current_transcript: Optional[str]
     current_response: Optional[str]
 
@@ -51,17 +76,6 @@ class VoiceCallState(TypedDict):
 
     # Action
     actions: ActionState
-
-    # Control
-    should_continue: bool
-
-
-class LeadExecutionState(TypedDict):
-    # Conversation
-    messages: Annotated[list[BaseMessage], add_messages]
-
-    language: Optional[str]
-
 
 
 

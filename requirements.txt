@@ -47,4 +47,6 @@ python-dotenv
 websocket-client
 
 
+nvidia-cuda-runtime-cu12
+
 

@@ -227,13 +227,13 @@ async def lead_extraction(state):
     }
 
 
-test_state={
-    "messages":[HumanMessage(content="not confirm right now"), AIMessage(content="so when we can have a next call?"), HumanMessage(content="we can take a call tomorrow? at 9pm")],
-    "language":"en",
-    "current_transcript":"but I want to build a e-commerace website. I sell cloths, i have around 600 products and my budget is around 60,000 rupees",
-}
+# test_state={
+#     "messages":[HumanMessage(content="not confirm right now"), AIMessage(content="so when we can have a next call?"), HumanMessage(content="we can take a call tomorrow? at 9pm")],
+#     "language":"en",
+#     "current_transcript":"but I want to build a e-commerace website. I sell cloths, i have around 600 products and my budget is around 60,000 rupees",
+# }
 
-print(lead_extraction(test_state))
+# print(lead_extraction(test_state))
 
 
 

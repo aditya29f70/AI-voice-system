@@ -4,7 +4,7 @@ def conversation_should_continue(state) -> Literal['connected', 'disconnected']:
     if state['should_continue']:
         return 'connected'
     else:
-        "disconnected"
+        return "disconnected"
 
 
 def decide_hot_warm(state)-> Literal['hot_action', "warm_action", "__end__"]:
