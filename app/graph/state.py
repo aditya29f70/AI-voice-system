@@ -20,6 +20,7 @@ class CallbackInfo(TypedDict):
     date: Optional[str]
     time: Optional[str]
     timezone: Optional[str]
+    callback_situation: Optional[str]
 
 class ActionState(TypedDict):
     whatsapp_sent_mid_call: bool
@@ -31,7 +32,7 @@ class VoiceCallState(TypedDict):
     # Conversation
     messages: Annotated[list[BaseMessage], add_messages]
 
-    # language: Optional[str]
+    language: Optional[str]
 
     # Call information
     customer_phone: str 
@@ -49,6 +50,8 @@ class VoiceCallState(TypedDict):
     # # Callback
     # callback: CallbackInfo
 
+    callback_situation: Optional[str]
+
     # # Action
     # actions: ActionState
 
@@ -59,8 +62,6 @@ class VoiceCallState(TypedDict):
 class LeadExecutionState(TypedDict):
     # Conversation
     messages: list[BaseMessage]
-
-    language: Optional[str]
 
     customer_phone: str 
     my_phone: str 

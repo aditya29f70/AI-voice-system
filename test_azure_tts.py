@@ -17,9 +17,15 @@ SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")        # whatever region you pi
 
 # A few neural voices to try across the languages you need.
 VOICES = {
-    "hi": "hi-IN-SwaraNeural",
-    "te": "te-IN-ShrutiNeural",
-    "en": "en-IN-NeerjaNeural",   # Indian-English voice — tends to land better on this audience
+    "hindi": "hi-IN-SwaraNeural",
+    "telugu": "te-IN-ShrutiNeural",
+    "english": "en-IN-NeerjaNeural",   # Indian-English voice — tends to land better on this audience
+}
+
+TEST_LINES = {
+    "hindi": "नमस्ते, मैं ElevateBox से बात कर रहा हूँ।",
+    "telugu": "నమస్తే, నేను ElevateBox నుండి మాట్లాడుతున్నాను.",
+    "english": "Hi, I'm calling from ElevateBox about your e-commerce website.",
 }
 
 

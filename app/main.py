@@ -1,15 +1,19 @@
-from app.graph.graph import graph1
+import os
+from app.graph.graph import graph1, graph2
 import sounddevice as sd
 from scipy.io.wavfile import write
 import asyncio
 
 
-CONFIG= {"configurable":{"thread_id":"1"}}
+GRAPH1_CONFIG= {"configurable":{"thread_id":"1"}}
+GRAPH2_CONFIG= {"configurable":{"thread_id":"1"}}
 
 
 async def main():
 
-
+    find_lead_flag=True
+    callback_message=""
+    lead_update={"actions":{"whatsapp_sent_mid_call":False, "callback_scheduled":False}, "callback":{"callback_situation":None}}
     while True:
         sample_rate= 16000
         duration= 20
@@ -33,20 +37,48 @@ async def main():
         audio_path= "audio.wav"
 
 
-        init_state={
-            "current_audio":audio_path
+        graph1_init_state={
+            "current_audio":audio_path,
+            "callback_situation": callback_message if callback_message else None
         }
 
 
 
-        result= await graph1.ainvoke(init_state, config=CONFIG)
+        result= await graph1.ainvoke(graph1_init_state, config=GRAPH1_CONFIG)
 
         print(f"Current User Transcript: {result['current_transcript']}\n")
         print(f"Current Ai Response: {result['current_response']}\n\n")
+        print(result)
         
 
         if not result['should_continue']:
             break
+
+        if result and find_lead_flag:
+            graph2_init_state={
+                "messages": result['messages'],
+                "customer_phone": os.getenv("MY_NUMBER"),
+                "current_transcript": result['current_transcript'],
+                "current_response": result['current_response'],
+                "actions":{"whatsapp_sent_mid_call":lead_update['actions']['whatsapp_sent_mid_call'], "callback_scheduled": lead_update['actions']['callback_scheduled']},
+                "callback":{"callback_situation": lead_update['callback']['callback_situation']}
+            }
+
+            lead_update= await graph2.ainvoke(graph2_init_state, config=GRAPH2_CONFIG)
+
+            print(f"\nLead updatelead_update{lead_update}\n\n")
+
+            if lead_update['callback']['callback_situation']:
+                callback_message= lead_update['callback']['callback_situation']
+
+            if lead_update['actions']['whatsapp_sent_mid_call'] and lead_update['actions']['callback_scheduled']:
+                find_lead_flag=False
+
+
+
+
+
+            
 
 
 if __name__=="__main__":

@@ -50,3 +50,8 @@ websocket-client
 nvidia-cuda-runtime-cu12
 
 
+# for whatsapp messeging
+httpx
+
+
+azure-cognitiveservices-speech

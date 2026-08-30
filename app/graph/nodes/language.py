@@ -26,8 +26,4 @@ def detect_language(state):
         Language.TELUGU: "te",
     }
 
-    return {
-        "lead":{
-            "language": language_map.get(detected, 'en')
-        }
-    }
+    return {"language": language_map.get(detected, 'en')}

@@ -8,7 +8,7 @@ from app.graph.nodes.language import detect_language
 from app.graph.nodes.lead_extraction import lead_extraction
 from app.graph.nodes.hot_action import hot_action
 from app.graph.nodes.warm_action import warm_action
-from app.graph.routing import conversation_should_continue, decide_hot_warm
+from app.graph.routing import decide_hot_warm
 import os
 
 
@@ -16,10 +16,10 @@ builder1= StateGraph(VoiceCallState)
 builder2= StateGraph(LeadExecutionState)
 
 builder1.add_node('speech_to_text', speech_to_text)
+builder1.add_node("detect_language", detect_language)
 builder1.add_node("fast_reply_llm", fast_reply_llm)
 builder1.add_node("text_to_speech", text_to_speech)
 
-builder2.add_node("detect_language", detect_language)
 builder2.add_node("lead_extraction", lead_extraction)
 builder2.add_node("hot_action", hot_action)
 builder2.add_node("warm_action", warm_action)
@@ -27,21 +27,22 @@ builder2.add_node("warm_action", warm_action)
 
 
 builder1.add_edge(START, "speech_to_text")
-builder1.add_edge("speech_to_text", "fast_reply_llm")
-builder1.add_conditional_edges("fast_reply_llm", conversation_should_continue, {"connected": "text_to_speech", "disconnected":END})
+builder1.add_edge("speech_to_text", "detect_language")
+builder1.add_edge("detect_language", "fast_reply_llm")
+builder1.add_edge("fast_reply_llm", "text_to_speech")
 builder1.add_edge("text_to_speech",END)
 
-builder2.add_edge(START, "detect_language")
-builder2.add_edge("detect_language", "lead_extraction")
+builder2.add_edge(START, "lead_extraction")
 builder2.add_conditional_edges("lead_extraction", decide_hot_warm)
 builder2.add_edge("hot_action",END)
 builder2.add_edge("warm_action", END)
 
 
 graph1_checkpointer= InMemorySaver()
+graph2_checkpointer= InMemorySaver()
 
 graph1= builder1.compile(graph1_checkpointer)
-graph2= builder2.compile()
+graph2= builder2.compile(graph2_checkpointer)
 
 graph1_png= graph1.get_graph().draw_mermaid_png()
 graph2_png= graph2.get_graph().draw_mermaid_png()

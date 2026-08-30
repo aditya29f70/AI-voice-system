@@ -131,6 +131,19 @@ Do NOT set `should_continue` to FALSE merely because:
 If there is uncertainty about whether the user wants to end the conversation,
 prefer `should_continue = true`.
 
+===================================
+callback situation (if user have explicitly have told)
+==================================
+-> {callback_situation}
+
+### Conversation Language
+
+{language}
+
+The customer may speak in the language specified above. Understand the
+conversation regardless of whether it contains English, Hindi, Telugu, or
+another language.
+
 ==================================================
 CONVERSATION HISTORY
 ==================================================
@@ -164,13 +177,13 @@ async def fast_reply_llm(state):
 
     prompt= PromptTemplate(
         template=FAST_LLM_PROMPT_TEMPLATE,
-        input_variables=['conversation_history', 'current_user_transcript'],
+        input_variables=['callback_situation','language' 'conversation_history', 'current_user_transcript'],
         partial_variables={"format_instructions":parser.get_format_instructions()}
     )
 
     chain= prompt|llm| parser
 
-    llm_output= await chain.ainvoke({"conversation_history":conversation_history, "current_user_transcript": state['current_transcript']})
+    llm_output= await chain.ainvoke({"conversation_history":conversation_history, "language":state['language'], "current_user_transcript": state['current_transcript'], "callback_situation": state['callback_situation'] if state['callback_situation'] else None})
 
     return {"messages":[AIMessage(content= llm_output.response)], "current_response": llm_output.response, "should_continue": llm_output.should_continue}
 

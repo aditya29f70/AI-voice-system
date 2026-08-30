@@ -75,6 +75,7 @@ class LeadExtractor(BaseModel):
             "timezone unless the customer explicitly specifies a different timezone."
         )
     )
+    
 
 
 LEAD_PROMPT_TEMPLATE = """
@@ -88,14 +89,6 @@ Your task is to analyze the conversation and extract the latest structured
 lead and callback information.
 
 The conversation may contain messages from both the customer and the assistant.
-
-### Conversation Language
-
-{language}
-
-The customer may speak in the language specified above. Understand the
-conversation regardless of whether it contains English, Hindi, Telugu, or
-another language.
 
 ### Conversation History
 
@@ -197,7 +190,7 @@ async def lead_extraction(state):
 
     prompt= PromptTemplate(
         template=LEAD_PROMPT_TEMPLATE,
-        input_variables=["current_date","language", "conversation_history", "current_transcript"],
+        input_variables=["current_date", "conversation_history", "current_transcript"],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
 
@@ -205,7 +198,7 @@ async def lead_extraction(state):
 
     lead_chain= prompt|llm|parser
 
-    lead_output= await lead_chain.ainvoke({"current_date": today, "language":state['language'], "conversation_history": conversation_history, "current_transcript": state['current_transcript']})
+    lead_output= await lead_chain.ainvoke({"current_date": today, "conversation_history": conversation_history, "current_transcript": state['current_transcript']})
 
 
     return {
@@ -222,8 +215,11 @@ async def lead_extraction(state):
             "requested":lead_output.requested,
             "date": lead_output.date,
             "time": lead_output.time,
-            "timezone": lead_output.timezone
-        }
+            "timezone": lead_output.timezone,
+            "callback_situation": state['callback']['callback_situation']
+        },
+        "actions": state['actions']
+        
     }
 
 
