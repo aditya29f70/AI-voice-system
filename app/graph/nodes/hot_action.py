@@ -82,6 +82,6 @@ async def hot_action(state):
         body=response
     )
 
-    return {"actions":{"whatsapp_sent_mid_call":result["success"], "callback_scheduled": state['actions']['callback_scheduled']}, "lead":state['lead'], "callback": state['callback']}
+    return {"actions":{"whatsapp_sent_mid_call":result["success"], "callback_scheduled": False}, "lead":state['lead'], "callback": state['callback']}
 
    

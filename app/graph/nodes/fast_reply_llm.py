@@ -340,6 +340,26 @@ LATEST CUSTOMER TRANSCRIPT
 OUTPUT REQUIREMENTS
 ==================================================
 
+==================================================
+EMAIL AND CONTACT INFORMATION
+==================================================
+
+The customer's contact information is already handled by the system.
+
+Do NOT ask the customer for their email address, phone number, WhatsApp number,
+or any other contact details.
+
+Never ask for an email address.
+
+If information, documents, a resume, portfolio, proposal, or other materials
+need to be sent after the call, a separate system handles the email process.
+
+Do not promise that an email has been sent unless explicitly instructed by the
+system.
+
+Your responsibility is only to maintain the natural spoken conversation and
+understand the customer's project requirements.
+
 Return ONLY the structured output described by the format instructions.
 
 {format_instructions}

@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from app.graph.state import VoiceCallState,LeadExecutionState
 from app.graph.nodes.tts import text_to_speech
 from app.graph.nodes.stt import speech_to_text
@@ -11,6 +11,7 @@ from app.graph.nodes.warm_action import warm_action
 from app.graph.routing import decide_hot_warm
 import os
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()
 
@@ -43,21 +44,27 @@ builder2.add_edge("warm_action", END)
 
 db_url= os.getenv("DATABASE_URL")
 
-with PostgresSaver.from_conn_string(db_url) as checkpointer:
-    checkpointer.setup()
+async def create_graphs(checkpointer): 
 
     graph1= builder1.compile(checkpointer=checkpointer)
     graph2= builder2.compile(checkpointer=checkpointer)
+    return graph1, graph2
 
-graph1_png= graph1.get_graph().draw_mermaid_png()
-graph2_png= graph2.get_graph().draw_mermaid_png()
+async def drow_all_graphs():
+    async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
+        await checkpointer.setup()
+
+        graph1, graph2= await create_graphs(checkpointer)
+
+        graph1_png= graph1.get_graph().draw_mermaid_png()
+        graph2_png= graph2.get_graph().draw_mermaid_png()
 
 
-graph1_path= os.path.join(os.getcwd(), "app\graph\graph1.png")
-graph2_path= os.path.join(os.getcwd(), "app\graph\graph2.png")
+        graph1_path= os.path.join(os.getcwd(), "app\graph\graph1.png")
+        graph2_path= os.path.join(os.getcwd(), "app\graph\graph2.png")
 
-with open(graph1_path, "wb") as f:
-    f.write(graph1_png)
+        with open(graph1_path, "wb") as f:
+            f.write(graph1_png)
 
-with open(graph2_path, "wb") as f:
-    f.write(graph2_png)
+        with open(graph2_path, "wb") as f:
+            f.write(graph2_png)

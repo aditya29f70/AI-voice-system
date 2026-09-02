@@ -62,7 +62,9 @@ class VoiceCallState(TypedDict):
 class LeadExecutionState(TypedDict):
     # Conversation
     messages: list[BaseMessage]
+    thread_id: Optional[str]
 
+    customer_id: Optional[int]
     customer_phone: str 
     my_phone: str 
     customer_email: Optional[str]

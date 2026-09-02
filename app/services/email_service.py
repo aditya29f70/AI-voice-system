@@ -1,6 +1,8 @@
 import os
 import smtplib
 import asyncio
+from pathlib import Path
+import mimetypes
 
 from email.message import EmailMessage
 from dotenv import load_dotenv
@@ -21,7 +23,8 @@ class EmailService:
         self,
         to_email: str,
         subject: str,
-        body: str
+        body: str,
+        attachments: list[str] = None
     ):
 
         message = EmailMessage()
@@ -31,6 +34,28 @@ class EmailService:
         message["Subject"] = subject
 
         message.set_content(body)
+
+        if attachments:
+            for file_path in attachments:
+                path= Path(file_path)
+
+                mime_type, _= mimetypes.guess_type(path)
+
+                if mime_type is None:
+                    maintype= "application"
+                    subtype= "octet-stream"
+                else:
+                    maintype, subtype = mime_type.split("/", 1)
+
+                with open(path, "rb") as file:
+                    file_data = file.read()
+
+                message.add_attachment(
+                    file_data,
+                    maintype=maintype,
+                    subtype=subtype,
+                    filename=path.name
+                )
 
         with smtplib.SMTP_SSL(
             "smtp.gmail.com",
@@ -54,12 +79,14 @@ class EmailService:
         self,
         to_email: str,
         subject: str,
-        body: str
+        body: str,
+        attachments: list[str] = None
     ):
 
         return await asyncio.to_thread(
             self._send_email_sync,
             to_email,
             subject,
-            body
+            body,
+            attachments
         )
