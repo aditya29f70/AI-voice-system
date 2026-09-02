@@ -1,0 +1,20 @@
+services:
+
+  postgres:
+    image: postgres:16
+
+    container_name: voice_assistant_db
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: voice_assistant
+
+    ports:
+      - "5442:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

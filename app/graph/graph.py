@@ -1,5 +1,5 @@
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from app.graph.state import VoiceCallState,LeadExecutionState
 from app.graph.nodes.tts import text_to_speech
 from app.graph.nodes.stt import speech_to_text
@@ -10,6 +10,9 @@ from app.graph.nodes.hot_action import hot_action
 from app.graph.nodes.warm_action import warm_action
 from app.graph.routing import decide_hot_warm
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 builder1= StateGraph(VoiceCallState)
@@ -38,11 +41,13 @@ builder2.add_edge("hot_action",END)
 builder2.add_edge("warm_action", END)
 
 
-graph1_checkpointer= InMemorySaver()
-graph2_checkpointer= InMemorySaver()
+db_url= os.getenv("DATABASE_URL")
 
-graph1= builder1.compile(graph1_checkpointer)
-graph2= builder2.compile(graph2_checkpointer)
+with PostgresSaver.from_conn_string(db_url) as checkpointer:
+    checkpointer.setup()
+
+    graph1= builder1.compile(checkpointer=checkpointer)
+    graph2= builder2.compile(checkpointer=checkpointer)
 
 graph1_png= graph1.get_graph().draw_mermaid_png()
 graph2_png= graph2.get_graph().draw_mermaid_png()

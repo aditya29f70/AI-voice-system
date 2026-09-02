@@ -1,12 +1,16 @@
 import os
+from dotenv import load_dotenv
 from app.graph.graph import graph1, graph2
 import sounddevice as sd
 from scipy.io.wavfile import write
 import asyncio
 
+load_dotenv()
 
-GRAPH1_CONFIG= {"configurable":{"thread_id":"1"}}
-GRAPH2_CONFIG= {"configurable":{"thread_id":"1"}}
+call_id= os.getenv("MY_NUMBER")
+
+GRAPH1_CONFIG= {"configurable":{"thread_id":f"{call_id}:fast"}}
+GRAPH2_CONFIG= {"configurable":{"thread_id":f"{call_id}:lead"}}
 
 
 async def main():
@@ -58,6 +62,7 @@ async def main():
             graph2_init_state={
                 "messages": result['messages'],
                 "customer_phone": os.getenv("MY_NUMBER"),
+                "customer_email": "adityakumar81raj@gmail.com",
                 "current_transcript": result['current_transcript'],
                 "current_response": result['current_response'],
                 "actions":{"whatsapp_sent_mid_call":lead_update['actions']['whatsapp_sent_mid_call'], "callback_scheduled": lead_update['actions']['callback_scheduled']},

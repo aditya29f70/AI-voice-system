@@ -65,6 +65,7 @@ class LeadExecutionState(TypedDict):
 
     customer_phone: str 
     my_phone: str 
+    customer_email: Optional[str]
 
     current_transcript: Optional[str]
     current_response: Optional[str]

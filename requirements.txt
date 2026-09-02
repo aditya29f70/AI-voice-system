@@ -55,3 +55,8 @@ httpx
 
 
 azure-cognitiveservices-speech
+
+apscheduler
+sqlalchemy
+asyncpg
+langgraph-checkpoint-postgres

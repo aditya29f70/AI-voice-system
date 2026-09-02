@@ -3,14 +3,13 @@
 def warm_action(state):
 
     callback_situation=""
-    if not state['lead']['date']:
+    if not state['callback']['date']:
         callback_situation+= "date of callback is not provided,"
 
-    if not state['lead']['time']:
+    if not state['callback']['time']:
         callback_situation+= "time to callback is not provided"
 
     if callback_situation:
-        print()
         return {"callback":{"callback_situation": callback_situation}}
 
     # For now, simulate scheduling
