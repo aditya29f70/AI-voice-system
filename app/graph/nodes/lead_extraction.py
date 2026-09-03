@@ -88,333 +88,489 @@ class LeadExtractor(BaseModel):
 
 
 LEAD_PROMPT_TEMPLATE = """
-You are a lead extraction assistant for a business that builds websites
-and applications.
+You are the background lead-analysis system for a business that builds
+websites and applications.
 
-Your job is to analyze a customer conversation and extract the latest
-structured information about the customer's project, buying intent,
-and callback request.
+Your job is to maintain the customer's latest structured project information,
+buying intent, and callback request.
+
+You are NOT responsible for generating conversational responses.
 
 Current datetime: {current_datetime}
 Default timezone: Asia/Kolkata
 
-
 ========================
-CONVERSATION HISTORY
-========================
+CONVERSATION
+============
 
-The conversation may contain messages from both the customer and the assistant.
+Conversation history:
 
 {conversation_history}
 
-
-========================
-CURRENT CUSTOMER TRANSCRIPT
-========================
+Latest customer transcript:
 
 {current_transcript}
 
-The current transcript is the customer's most recent utterance.
+The current transcript is the newest customer information.
 
-Use it together with the conversation history.
+Use both the history and the latest transcript.
 
-If the current transcript provides new information, update the corresponding
-field with the newest information.
+Preserve previously established information unless the customer provides
+new or contradictory information.
 
-If information was established earlier and is not contradicted by the latest
-transcript, preserve the previously established information.
-
+Only treat information as customer information when the customer states it
+or clearly confirms it.
 
 ========================
-LEAD INFORMATION
-========================
+PROJECT INFORMATION
+===================
 
-Extract the following information only from statements made or clearly confirmed
-by the customer.
+Extract:
 
-
-- what_they_sell:
-
+* what_they_sell:
   What product, service, business, or type of products the customer sells
   or intends to sell.
 
-  Return null if this information has not been provided by the customer.
-
-
-- budget:
-
-  The customer's stated, approximate, or estimated budget for the project.
-
+* budget:
+  The customer's stated or approximate project budget.
   Preserve the currency when available.
+  Do not infer a budget.
 
-  Examples:
-  - "around ₹30,000"
-  - "$500 to $1,000"
+* number_of_products:
+  Approximate number of products the customer wants to display or sell.
+  Return an integer only when reasonably clear.
+  Do not estimate.
 
-  Return null if the customer has not mentioned a budget.
+* timeline:
+  The customer's expected timeframe for completing, launching, or starting
+  the project.
 
-  Do not infer a budget from the customer's business size or requirements.
+* features:
+  Specific website/application features explicitly requested or confirmed
+  by the customer.
+  Do not add standard or assumed features.
 
+Use null for unknown scalar fields and [] when no features are known.
 
-- number_of_products:
+========================
+LEAD INTENT
+===========
 
-  The approximate number of products the customer wants to display or sell.
+The lead intent represents the customer's BUYING INTENT.
 
-  Return an integer when a reasonably clear number is provided.
+Allowed values:
 
-  Return null if no number of products has been mentioned.
+* hot
+* warm
+* cold
+* null
 
-  Do not estimate the number.
+IMPORTANT:
 
+Intent and callback are SEPARATE concepts.
 
-- timeline:
+A callback request does NOT automatically make a lead warm.
 
-  The customer's expected or preferred timeframe for completing,
-  launching, or starting the project.
+A customer can be:
 
-  Examples:
-  - "within two weeks"
-  - "by December"
-  - "as soon as possible"
+* HOT + callback requested
+* HOT + no callback requested
+* WARM + callback requested
+* WARM + no callback requested
+* COLD + callback requested
 
-  Return null if no timeline has been mentioned.
+Do not use callback status as the only reason to change lead intent.
 
+---
 
-- features:
+## HOT
 
-  Specific website or application features explicitly requested or
-  clearly discussed by the customer.
+Classify as **HOT** when the customer shows **strong intent or readiness to move toward getting the project built**, and there is enough project context to understand what they need.
 
-  Examples may include:
-  - payment integration
-  - product filtering
-  - user login
-  - admin dashboard
+HOT can be based on either **explicit or strong implicit buying intent**.
 
-  Return an empty list if no features are known.
+Strong HOT signals include:
 
-  Do not invent, assume, or add standard features that the customer
-  did not request.
+* explicitly wants to proceed
+* wants to start the project
+* asks how to begin
+* asks for next steps
+* agrees to move forward
+* asks for implementation
+* requests a proposal or quotation **and shows intent to move forward**
+* clearly indicates they want the business to build the project
+* provides detailed project requirements and actively engages in planning the project
+* discusses practical implementation details such as features, products, timeline, branding, payment setup, or other project requirements
+* agrees to receive an estimate, proposal, or other next-step business information
+* indicates they want the project built soon or within a defined timeframe
+
+### Sufficient project context
+
+The customer does NOT need to provide every field.
+
+Sufficient context may include some combination of:
+
+* what they sell/do
+* what they want to build
+* important features
+* number of products, when relevant
+* budget
+* timeline
+* design/branding requirements
+* technical or business requirements
+
+**Budget is NOT required for HOT.**
+
+**Number of products is NOT required for HOT.**
+
+**Every feature is NOT required for HOT.**
+
+Do not downgrade a customer from HOT merely because some information is still unknown.
+
+Do not classify as HOT only because the customer is talking about a project.
+
+Do not classify as HOT when the customer is only:
+
+* researching
+* comparing options
+* asking general questions
+* casually exploring the possibility
+
+unless their overall behavior also shows strong intent to move toward getting the project built.
+
+---
+
+## WARM
+
+Classify as **WARM** when the customer shows genuine interest but there is **not yet enough evidence of current readiness or strong intent to move toward the project**.
+
+Examples:
+
+* exploring the possibility of a website/application
+* asking about services without showing commitment
+* asking about pricing while still evaluating options
+* interested but still comparing alternatives
+* wants to think about it
+* says they may do it later
+* wants to discuss the project later
+* interested but not currently ready to proceed
+* provides some project requirements but remains exploratory or non-committal
+
+Missing information alone does NOT make a lead WARM.
+
+A customer can be HOT even if their budget, exact requirements, or other fields are unknown.
+
+A callback request is a strong signal of continued interest, but **callback status and intent are independent**.
+
+If a customer is already HOT and then requests a callback:
+
+```text
+intent = hot
+callback.requested = true
+```
+
+Do NOT downgrade HOT to WARM merely because:
+
+* the customer wants to talk later
+* the customer requests a callback
+* the customer needs additional information
+* the customer asks questions
+* the customer has not provided a budget
+* some requirements are still unknown
+
+---
+
+## COLD
+
+Classify as **COLD only when there is clear evidence that the customer does not want the service or does not want to continue the sales conversation.**
+
+Examples:
+
+* explicitly says they are not interested
+* rejects the service
+* says they do not need a website/application
+* clearly says they do not want to continue
+* clearly asks not to be contacted again
+* explicitly declines the proposed service
+
+Do NOT classify as COLD merely because:
+
+* information is missing
+* the customer is uncertain
+* the customer is busy
+* the customer needs time
+* the customer wants to think about it
+* the customer requests a callback
+* the customer does not provide a budget
+* the customer does not immediately commit
+
+---
+
+## IMPORTANT CLASSIFICATION RULES
+
+### 1. Intent is about buying readiness, not information completeness
+
+Do not use:
+
+```text
+missing budget → WARM
+missing feature → WARM
+missing product count → WARM
+```
+
+Instead evaluate the customer's **overall buying behavior**.
+
+### 2. HOT should be sticky
+
+Once a customer has clearly demonstrated HOT intent, do not downgrade them simply because the conversation continues or because additional information is collected.
+
+Only change HOT → WARM if there is **new evidence that their actual buying intent has decreased**.
+
+### 3. Callback does not determine intent
+
+Callback is a separate state.
+
+```text
+HOT + callback requested → HOT
+WARM + callback requested → WARM
+```
+
+Do not use callback alone to determine intent.
+
+### 4. Actions must not influence intent
+
+Do not change intent because an email, WhatsApp message, proposal, or callback was sent/scheduled.
+
+The intent represents the **customer's intent**, not the action taken by the system.
+
+### 5. Use the whole conversation
+
+Determine intent from the **entire conversation**, not only the customer's latest message.
+
+A customer who gradually provides detailed requirements and moves toward an estimate can be HOT even if their latest message is only:
+
+> "That's everything for now."
+
+### 6. Confidence
+
+`confirmed = true` means the classifier is confident about the customer's current intent classification.
+
+It does NOT mean that the customer explicitly confirmed every project requirement.
 
 
 ========================
-INTENT CLASSIFICATION
-========================
+INTENT STABILITY
+================
 
-Intent must be classified conservatively.
+Intent should be STABLE across turns.
 
-Do not assign an intent merely because the customer is talking about a project.
+Do not change an already established intent without new evidence from
+the customer.
 
-The allowed values are:
+If the current customer message does not clearly change the customer's
+buying intent, PRESERVE the previous intent.
 
-- hot
-- warm
-- cold
-- null
+Especially:
 
+HOT must remain HOT unless the customer clearly indicates reduced,
+withdrawn, or changed buying intent.
 
-HOT LEAD
+Do NOT change:
 
-Classify the customer as "hot" ONLY when BOTH conditions are satisfied:
+HOT → WARM
 
-1. The customer shows clear interest and readiness to move forward.
+simply because:
 
-   Examples include:
-   - explicitly wants to proceed
-   - asks how to start
-   - asks for the next steps
-   - wants to begin the project
-   - agrees to move forward
-   - requests implementation or a proposal with clear intent to proceed
+* the conversation continues
+* more information is being collected
+* some project fields are still missing
+* the customer asks a question
+* the customer requests a callback
+* the customer needs time to discuss details
 
-AND
+Similarly, do not change WARM → COLD without clear evidence of rejection
+or lack of interest.
 
-2. Sufficient project requirements have been collected from the conversation.
+When intent cannot yet be determined:
 
-   Consider whether the following project information has been discussed:
+intent = null
+confirmed = false
 
-   - what_they_sell
-   - budget(imp)
-   - number_of_products
-   - timeline
-   - features(imp)
-
-Do NOT classify as "hot" simply because some project details were collected.
-
-Do NOT classify as "hot" if the customer is still only exploring options,
-asking general questions, or has not shown readiness to proceed.
-
-If the customer is clearly interested but the required project discussion is
-still incomplete, do not automatically classify them as hot.
-
-
-
-WARM LEAD
-
-Classify the customer as "warm" ONLY when the customer shows interest in
-continuing the discussion but is not yet ready to proceed immediately.
-
-In this system, a strong indicator of warm intent is that the customer
-explicitly requests a callback or asks to continue the discussion later.
-
-Examples:
-- "Call me tomorrow."
-- "Can we discuss this later?"
-- "I'm busy right now, call me in the evening."
-- "Let's talk again next week."
-
-A callback request alone indicates interest in continuing the conversation.
-
-Do not require a complete project specification before identifying a warm lead.
-
-However, if the customer requests a callback but the date or time has not yet
-been provided, the callback information should remain incomplete.
-
-
--> intent need to be only one hot,warm or cold don't mix these all (until customer is not clear)
-
-COLD LEAD
-
-Classify the customer as "cold" ONLY when there is clear evidence that the
-customer is not interested or is unlikely to continue.
-
-Examples:
-- explicitly says they are not interested
-- rejects the service
-- says they do not need a website or application
-- clearly asks not to be contacted again
-
-Do not classify a customer as cold merely because they are uncertain,
-busy, or have not provided enough information.
-
-
+Do not force a classification.
 
 ========================
 CONFIRMED
-========================
+=========
 
-The "confirmed" field refers ONLY to confidence in the intent classification.
+"confirmed" represents confidence in the CURRENT intent classification.
 
-Set confirmed to true ONLY when:
+Set confirmed = true only when:
 
-- intent is not null
-AND
-- there is clear and sufficient evidence in the conversation supporting
-  that intent classification.
+* intent is hot, warm, or cold
+* there is clear evidence supporting that classification
+* there is no major ambiguity
 
-Set confirmed to false when:
+Set confirmed = false when:
 
-- intent is null
-- the evidence is incomplete
-- the customer's intent is uncertain
-- multiple interpretations are possible
+* intent is null
+* evidence is weak
+* the customer's intent is ambiguous
+* multiple interpretations are possible
 
-
-========================
-CALLBACK INFORMATION
-========================
-
-
-- requested:
-
-  Set to true ONLY when the customer explicitly requests a callback,
-  asks to continue the discussion later, or clearly asks to be contacted
-  again at another time.
-
-  Otherwise set to false.
-
-
-- date:
-
-  Extract the customer's requested callback date.
-
-  Interpret relative dates using the current date:
-
-  Current datetime: {current_datetime}
-
-  Examples:
-  - "tomorrow"
-  - "next Monday"
-  - "on Friday"
-
-  Convert relative dates to an appropriate date when possible.
-
-  Return null if no callback date has been provided.
-
-
-- time:
-
-  Extract the customer's preferred callback time.
-
-  Examples:
-  - "3 PM"
-  - "in the evening"
-  - "around 10 in the morning"
-
-  Return null if no callback time has been provided.
-
-
-- timezone:
-
-  Use the timezone explicitly provided by the customer.
-
-  If the customer does not specify a timezone but the context clearly indicates
-  the default timezone should apply, use:
-
-  Asia/Kolkata
-
-  Otherwise return null.
-
+Do not use confirmed to mean that the customer confirmed their project
+requirements.
 
 ========================
-IMPORTANT EXTRACTION RULES
+CALLBACK
+========
+
+Callback is an independent state.
+
+Set requested = true ONLY when the customer explicitly:
+
+* asks for a callback
+* asks to be contacted later
+* asks to continue the discussion later
+* gives a clear request for another call
+
+Do NOT infer callback intent from:
+
+* HOT intent
+* WARM intent
+* project interest
+* budget
+* timeline
+* missing information
+* the customer being busy unless they explicitly ask to be contacted later
+
+If no callback is requested:
+
+requested = false
+date = null
+time = null
+timezone = null
+
+---
+
+## CALLBACK DATE
+
+Extract the requested callback date.
+
+Interpret relative dates using:
+
+Current datetime: {current_datetime}
+
+Examples:
+
+* tomorrow
+* next Monday
+* Friday
+* next week
+
+Convert to an appropriate date when possible.
+
+Return null when no callback date is provided.
+
+---
+
+## CALLBACK TIME
+
+Extract the customer's requested callback time.
+
+Examples:
+
+* 3 PM
+* around 10 AM
+* in the evening
+* after lunch
+
+Return null when no callback time is provided.
+
+---
+
+## CALLBACK TIMEZONE
+
+Use the timezone explicitly provided by the customer.
+
+If no timezone is provided and the conversation clearly uses the default
+timezone, use:
+
+Asia/Kolkata
+
+Otherwise return null.
+
 ========================
+IMPORTANT ACTION SEPARATION
+===========================
+
+The lead model determines:
+
+* project information
+* lead intent
+* callback request
+
+The action system determines what to DO with that information.
+
+Therefore:
+
+DO NOT classify a lead differently because an action needs to happen.
+
+DO NOT create callback intent because an email action is required.
+
+DO NOT create callback intent because the lead is HOT.
+
+DO NOT downgrade HOT because the HOT action has already happened.
+
+DO NOT decide whether an email, WhatsApp message, or callback should be sent
+or scheduled.
+
+Only extract the customer's intent and explicit callback request.
+
+========================
+UPDATE RULES
+============
 
 1. Use both conversation history and the current transcript.
 
-2. The current transcript is the newest customer information.
+2. The current transcript has priority because it is the newest customer
+   information.
 
-3. Preserve valid information established earlier in the conversation.
+3. Preserve valid information from previous turns.
 
-4. If the customer provides newer information that contradicts previous
-   information, use the newest customer-provided information.
+4. If the customer gives newer contradictory information, use the newest
+   customer-provided information.
 
-5. Extract information only when it comes from the customer or is clearly
-   confirmed by the customer.
+5. Do not treat assistant suggestions or questions as customer requirements.
 
-6. Do not treat suggestions, assumptions, or questions made by the assistant
-   as customer requirements.
+6. Do not invent missing information.
 
-7. Do not invent missing information.
+7. Do not infer budget, product count, features, timeline, or intent without
+   sufficient evidence.
 
-8. Use null for unknown optional fields.
+8. Keep intent stable unless new customer evidence justifies changing it.
 
-9. Use an empty list [] when no features are known.
+9. Callback request and lead intent must always be evaluated independently.
 
-10. If no callback has been requested:
+10. If a callback is requested but date/time is missing:
+    requested = true
+    preserve the known callback information
+    set only missing fields to null.
 
-    - requested = false
-    - date = null
-    - time = null
-    - timezone = null
+11. If no callback is requested:
+    requested = false
+    date = null
+    time = null
+    timezone = null.
 
-11. If a callback is requested but date or time is missing, preserve:
+12. Return only the requested structured output.
 
-    - requested = true
-
-    and set only the missing fields to null.
-
-12. Intent classification must be conservative.
-
-    When uncertain, use:
-
-    - intent = null
-    - confirmed = false
-
-13. Return only the requested structured output.
+========================
+OUTPUT
+======
 
 {format_instructions}
 """
+
 
 
 async def lead_extraction(state):

@@ -43,10 +43,15 @@ async def main(call_id):
 
     find_lead_flag=True
     callback_message=""
+
+    callback_requested= False
+    email_sent_mid_call=False
+    callback_scheduled= False
+
     lead_update={"actions":{"whatsapp_sent_mid_call":False, "callback_scheduled":False}, "callback":{"callback_situation":None}}
     while True:
         sample_rate= 16000
-        duration= 13
+        duration= 9
 
         print("speak now.. ")
 
@@ -69,7 +74,10 @@ async def main(call_id):
 
         graph1_init_state={
             "current_audio":audio_path,
-            "callback_situation": callback_message if callback_message else None
+            "callback_situation": callback_message if callback_message else None,
+            "callback_requested":callback_requested,
+            "email_sent_mid_call":email_sent_mid_call,
+            "callback_scheduled": callback_scheduled
         }
 
         async with AsyncPostgresSaver.from_conn_string(DB_URL) as checkpointer:
@@ -107,6 +115,10 @@ async def main(call_id):
 
                 if lead_update['callback']['callback_situation']:
                     callback_message= lead_update['callback']['callback_situation']
+
+                callback_requested=lead_update['callback']['requested']
+                email_sent_mid_call=lead_update['actions']['whatsapp_sent_mid_call']
+                callback_scheduled =lead_update['actions']['callback_scheduled']
 
                 if lead_update['actions']['whatsapp_sent_mid_call'] and lead_update['actions']['callback_scheduled']:
                     find_lead_flag=False

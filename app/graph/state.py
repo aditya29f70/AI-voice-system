@@ -52,6 +52,11 @@ class VoiceCallState(TypedDict):
 
     callback_situation: Optional[str]
 
+    callback_requested: bool 
+    email_sent_mid_call: bool 
+    callback_scheduled: bool 
+
+
     # # Action
     # actions: ActionState
 
