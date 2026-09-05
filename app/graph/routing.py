@@ -8,7 +8,7 @@ def conversation_should_continue(state) -> Literal['connected', 'disconnected']:
 
 
 def decide_hot_warm(state)-> Literal['hot_action', "warm_action", "__end__"]:
-    if not state['actions']['whatsapp_sent_mid_call'] and not state['actions']['callback_scheduled']:
+    if not state['actions']['whatsapp_sent_mid_call'] and not state['actions']['callback_scheduled'] and not state['callback']['requested']:
         if state['lead']['confirmed'] and state['lead']['intent']=='hot':
             return 'hot_action'
 

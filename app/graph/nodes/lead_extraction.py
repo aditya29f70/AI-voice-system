@@ -156,7 +156,18 @@ Use null for unknown scalar fields and [] when no features are known.
 LEAD INTENT
 ===========
 
-The lead intent represents the customer's BUYING INTENT.
+The lead intent represents the customer's CURRENT BUYING INTENT
+and READINESS to pursue the project.
+
+Intent is NOT a measure of:
+
+* how much information the customer provided
+* how friendly the customer was
+* how long the conversation lasted
+* whether the customer answered questions
+* whether the customer has a possible use case
+* whether a callback was requested
+* whether an email was sent
 
 Allowed values:
 
@@ -165,29 +176,14 @@ Allowed values:
 * cold
 * null
 
-IMPORTANT:
+Evaluate the customer's overall behavior across the conversation.
 
-Intent and callback are SEPARATE concepts.
+==================================================
+HOT
+===
 
-A callback request does NOT automatically make a lead warm.
-
-A customer can be:
-
-* HOT + callback requested
-* HOT + no callback requested
-* WARM + callback requested
-* WARM + no callback requested
-* COLD + callback requested
-
-Do not use callback status as the only reason to change lead intent.
-
----
-
-## HOT
-
-Classify as **HOT** when the customer shows **strong intent or readiness to move toward getting the project built**, and there is enough project context to understand what they need.
-
-HOT can be based on either **explicit or strong implicit buying intent**.
+Classify as HOT when the customer demonstrates clear current intent
+to move toward getting the project built.
 
 Strong HOT signals include:
 
@@ -197,113 +193,118 @@ Strong HOT signals include:
 * asks for next steps
 * agrees to move forward
 * asks for implementation
-* requests a proposal or quotation **and shows intent to move forward**
-* clearly indicates they want the business to build the project
-* provides detailed project requirements and actively engages in planning the project
-* discusses practical implementation details such as features, products, timeline, branding, payment setup, or other project requirements
-* agrees to receive an estimate, proposal, or other next-step business information
-* indicates they want the project built soon or within a defined timeframe
+* requests a proposal or quotation AND appears serious about proceeding
+* asks practical questions about getting the project built
+* discusses implementation details with the intention of moving forward
+* discusses budget, payment, timeline, or project execution seriously
+* indicates a concrete or reasonably near-term plan to start
+* clearly states that they want the business to build the project
 
-### Sufficient project context
+Do NOT classify as HOT merely because the customer:
 
-The customer does NOT need to provide every field.
+* describes a possible website
+* answers discovery questions
+* gives several requirements
+* asks general questions
+* is curious
+* is browsing
+* says they may do it someday
 
-Sufficient context may include some combination of:
+HOT means there is meaningful evidence of CURRENT buying intent.
 
-* what they sell/do
-* what they want to build
-* important features
-* number of products, when relevant
-* budget
-* timeline
-* design/branding requirements
-* technical or business requirements
+==================================================
+WARM
+====
 
-**Budget is NOT required for HOT.**
+Classify as WARM when the customer has a genuine potential need
+or meaningful interest, but is not currently ready or committed
+to move forward.
 
-**Number of products is NOT required for HOT.**
+Typical WARM signals include:
 
-**Every feature is NOT required for HOT.**
+* has a real problem they want solved
+* genuinely wants a website/application but is still evaluating
+* is considering getting the project built
+* wants to compare options before deciding
+* is interested but needs to think about it
+* expects to pursue the project later but has a meaningful intention
+* discusses the project seriously even though the timing is uncertain
+* asks relevant questions about pricing, features, implementation,
+  or suitability while seriously considering the project
 
-Do not downgrade a customer from HOT merely because some information is still unknown.
+WARM requires more than simple curiosity.
 
-Do not classify as HOT only because the customer is talking about a project.
+A customer should generally NOT be WARM when they repeatedly describe
+themselves as merely browsing or casually curious without a real plan
+to pursue the project.
 
-Do not classify as HOT when the customer is only:
+==================================================
+COLD
+====
 
-* researching
-* comparing options
-* asking general questions
-* casually exploring the possibility
+Classify as COLD when the customer shows little or no CURRENT buying
+intent, even if they remain polite, answer questions, or describe
+a possible use case.
 
-unless their overall behavior also shows strong intent to move toward getting the project built.
+COLD does NOT require explicit rejection.
 
----
 
-## WARM
+Important:
 
-Classify as **WARM** when the customer shows genuine interest but there is **not yet enough evidence of current readiness or strong intent to move toward the project**.
+A customer can provide detailed project information and STILL be COLD
+if their overall behavior shows that they are only browsing or casually
+exploring.
 
-Examples:
+For example:
 
-* exploring the possibility of a website/application
-* asking about services without showing commitment
-* asking about pricing while still evaluating options
-* interested but still comparing alternatives
-* wants to think about it
-* says they may do it later
-* wants to discuss the project later
-* interested but not currently ready to proceed
-* provides some project requirements but remains exploratory or non-committal
+Customer:
+"I have an old website, but I'm not actively planning anything.
+I'm just curious."
 
-Missing information alone does NOT make a lead WARM.
+Later:
+"Maybe sometime later, but no rush."
 
-A customer can be HOT even if their budget, exact requirements, or other fields are unknown.
+Later:
+"I haven't thought about budget. Just browsing."
 
-A callback request is a strong signal of continued interest, but **callback status and intent are independent**.
+This should be classified as:
 
-If a customer is already HOT and then requests a callback:
+intent = cold
 
-```text
-intent = hot
-callback.requested = true
-```
+because the customer's behavior shows no meaningful current buying intent.
 
-Do NOT downgrade HOT to WARM merely because:
+Do NOT classify this customer as WARM merely because they:
 
-* the customer wants to talk later
-* the customer requests a callback
-* the customer needs additional information
-* the customer asks questions
-* the customer has not provided a budget
-* some requirements are still unknown
+* have a business
+* have an old website
+* describe possible features
+* describe what they would put on the website
+* answer discovery questions
+* say they might do something later
 
----
+The existence of a possible future project is not sufficient for WARM.
 
-## COLD
+==================================================
+INTENT PRIORITY
+==============
 
-Classify as **COLD only when there is clear evidence that the customer does not want the service or does not want to continue the sales conversation.**
+When signals conflict, prioritize explicit statements about the
+customer's current intentions over the amount of project information
+they provide.
 
-Examples:
+For example:
 
-* explicitly says they are not interested
-* rejects the service
-* says they do not need a website/application
-* clearly says they do not want to continue
-* clearly asks not to be contacted again
-* explicitly declines the proposed service
+Detailed requirements + "I'm just browsing" = COLD
 
-Do NOT classify as COLD merely because:
+Detailed requirements + "I want to build this, but I'm deciding
+between providers" = WARM
 
-* information is missing
-* the customer is uncertain
-* the customer is busy
-* the customer needs time
-* the customer wants to think about it
-* the customer requests a callback
-* the customer does not provide a budget
-* the customer does not immediately commit
+Detailed requirements + "I want to get this started next month" = HOT
 
+Possible future project + no current plan = COLD or WARM depending
+on whether there is genuine intent to pursue it.
+
+Casual curiosity alone = COLD.
 ---
 
 ## IMPORTANT CLASSIFICATION RULES
@@ -388,8 +389,25 @@ simply because:
 * the customer requests a callback
 * the customer needs time to discuss details
 
-Similarly, do not change WARM → COLD without clear evidence of rejection
-or lack of interest.
+WARM → COLD
+
+Change WARM to COLD when new customer statements clearly show that
+their previous interest was only exploratory or that they currently
+have no meaningful intention to pursue the project.
+
+Examples:
+
+"I was just curious."
+
+"I'm not actually planning to do anything."
+
+"I'm only browsing."
+
+"I don't have any plans right now."
+
+"I was just checking what you offer."
+
+These can justify WARM → COLD even without explicit rejection.
 
 When intent cannot yet be determined:
 
@@ -398,27 +416,101 @@ confirmed = false
 
 Do not force a classification.
 
+COLD → WARM
+
+Allow COLD → WARM when the customer later demonstrates genuine interest
+or a real potential need.
+
+Example:
+
+"I'm just browsing."
+
+...
+
+"Actually, our current website is causing us problems and I've been
+thinking about replacing it."
+
+This can justify COLD → WARM.
+
+
+WARM → HOT
+
+Allow when the customer moves from consideration to concrete intent.
+
+Example:
+
+"I've been considering it."
+
+...
+
+"Actually, I'd like to get this started next month. What would you need
+from me?"
+
+→ HOT
+
+
+==================================================
+CONVERSATION OBJECTIVE
+======================
+
+The goal is NOT to collect every lead field.
+
+The goal is to understand whether the customer has a genuine current
+need or interest and, when appropriate, learn enough about their project
+to continue a useful conversation.
+
+Prioritize the customer's experience over completing a checklist.
+
+If the customer is highly interested:
+    explore the project naturally.
+
+If the customer is uncertain:
+    understand what is causing their uncertainty.
+
+If the customer is merely curious:
+    answer their questions and optionally ask one lightweight question.
+
+If the customer repeatedly indicates that they are only browsing or
+have no current plans:
+    stop intensive qualification and allow the conversation to remain
+    low-pressure.
+
+Never manufacture urgency.
+
+Never repeatedly ask for information after the customer has indicated
+that they are not actively planning a project.
+
 ========================
 CONFIRMED
 =========
 
-"confirmed" represents confidence in the CURRENT intent classification.
+confirmed represents confidence that the assigned intent accurately
+reflects the customer's CURRENT buying intent.
 
-Set confirmed = true only when:
+Set confirmed = true when there is sufficient behavioral evidence
+to distinguish the customer's intent.
 
-* intent is hot, warm, or cold
-* there is clear evidence supporting that classification
-* there is no major ambiguity
+Examples:
 
-Set confirmed = false when:
+Clearly says "I'm just browsing" + repeatedly says no plans
+→ cold, confirmed = true
 
-* intent is null
-* evidence is weak
-* the customer's intent is ambiguous
-* multiple interpretations are possible
+Has a genuine project but says "I'm still deciding"
+→ warm, confirmed = true
 
-Do not use confirmed to mean that the customer confirmed their project
-requirements.
+Clearly wants to start next month
+→ hot, confirmed = true
+
+Customer gives mixed signals and their actual intention is unclear
+→ intent = null, confirmed = false
+
+Do not require the customer to explicitly say:
+"I'm a cold lead."
+
+Infer intent from their actual statements and behavior.
+
+However, do not infer positive buying intent merely from politeness,
+cooperation, curiosity, or answering questions.
 
 ========================
 CALLBACK

@@ -40,7 +40,6 @@ class VoiceCallState(TypedDict):
     # call_active: bool
 
     # Current interaction
-    current_audio: Optional[bytes]
     current_transcript: Optional[str]
     current_response: Optional[str]
 

@@ -12,6 +12,7 @@ from app.graph.routing import decide_hot_warm
 import os
 from dotenv import load_dotenv
 import asyncio
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ load_dotenv()
 builder1= StateGraph(VoiceCallState)
 builder2= StateGraph(LeadExecutionState)
 
-builder1.add_node('speech_to_text', speech_to_text)
+# builder1.add_node('speech_to_text', speech_to_text)
 builder1.add_node("detect_language", detect_language)
 builder1.add_node("fast_reply_llm", fast_reply_llm)
 builder1.add_node("text_to_speech", text_to_speech)
@@ -30,8 +31,8 @@ builder2.add_node("warm_action", warm_action)
 
 
 
-builder1.add_edge(START, "speech_to_text")
-builder1.add_edge("speech_to_text", "detect_language")
+# builder1.add_edge(START, "speech_to_text")
+builder1.add_edge(START, "detect_language")
 builder1.add_edge("detect_language", "fast_reply_llm")
 builder1.add_edge("fast_reply_llm", "text_to_speech")
 builder1.add_edge("text_to_speech",END)
@@ -44,7 +45,7 @@ builder2.add_edge("warm_action", END)
 
 db_url= os.getenv("DATABASE_URL")
 
-async def create_graphs(checkpointer): 
+def create_graphs(checkpointer): 
 
     graph1= builder1.compile(checkpointer=checkpointer)
     graph2= builder2.compile(checkpointer=checkpointer)
@@ -54,7 +55,7 @@ async def drow_all_graphs():
     async with AsyncPostgresSaver.from_conn_string(db_url) as checkpointer:
         await checkpointer.setup()
 
-        graph1, graph2= await create_graphs(checkpointer)
+        graph1, graph2= create_graphs(checkpointer)
 
         graph1_png= graph1.get_graph().draw_mermaid_png()
         graph2_png= graph2.get_graph().draw_mermaid_png()
@@ -68,3 +69,8 @@ async def drow_all_graphs():
 
         with open(graph2_path, "wb") as f:
             f.write(graph2_png)
+
+        print("done")
+
+
+# asyncio.run(drow_all_graphs())

@@ -2,8 +2,12 @@ import os
 import sys
 from dotenv import load_dotenv
 from app.graph.graph import builder1, builder2
-import sounddevice as sd
-from scipy.io.wavfile import write
+
+from app.audio.adaptive_recorder import AdaptiveRecorder
+from app.services.stt_service import STTService
+
+from langchain_core.messages import HumanMessage
+
 import asyncio
 from sqlalchemy import select
 
@@ -49,84 +53,116 @@ async def main(call_id):
     callback_scheduled= False
 
     lead_update={"actions":{"whatsapp_sent_mid_call":False, "callback_scheduled":False}, "callback":{"callback_situation":None}}
-    while True:
-        sample_rate= 16000
-        duration= 9
 
-        print("speak now.. ")
+    recorder = AdaptiveRecorder()
+    stt = STTService()
+    print("\nVoice assistant started.")
+
+    result= {'should_continue':True}
+    while result['should_continue']:
+        try:
+
+            # --------------------------------
+            # Wait for user speech
+            # --------------------------------
+
+            audio = recorder.record_utterance()
+
+            if audio is None:
+                continue
+
+            # --------------------------------
+            # STT
+            # --------------------------------
+
+            print("\nTranscribing...")
+
+            text = stt.transcribe(audio)
+
+            print(
+                f"\nUser: {text}"
+            )
+
+            if not text:
+                continue
+
+            # --------------------------------
+            # YOUR LANGGRAPH
+            # --------------------------------
+
+            # result = graph.invoke(...)
+            #
+            # response = result[...]
+
+            graph1_init_state={
+                "messages":[HumanMessage(content=text)],
+                "current_transcript":text,
+                "callback_situation": callback_message if callback_message else None,
+                "callback_requested":callback_requested,
+                "email_sent_mid_call":email_sent_mid_call,
+                "callback_scheduled": callback_scheduled
+            }
 
 
-        audio= sd.rec(
-            int(duration* sample_rate),
-            samplerate = sample_rate,
-            channels=1,
-            dtype="int16"
 
-        )
+            async with AsyncPostgresSaver.from_conn_string(DB_URL) as checkpointer:
+                await checkpointer.setup()
 
-        sd.wait()
+                graph1= builder1.compile(checkpointer=checkpointer)
+                graph2= builder2.compile(checkpointer=checkpointer)
 
-        write("audio.wav", sample_rate, audio)
-        print("Saved as audio.wav")
+                result= await graph1.ainvoke(graph1_init_state, config=GRAPH1_CONFIG)
 
-        audio_path= "audio.wav"
+                print(f"Current Ai Response: {result['current_response']}\n\n")
+                print(result)
+                
 
 
-        graph1_init_state={
-            "current_audio":audio_path,
-            "callback_situation": callback_message if callback_message else None,
-            "callback_requested":callback_requested,
-            "email_sent_mid_call":email_sent_mid_call,
-            "callback_scheduled": callback_scheduled
-        }
+                if result and find_lead_flag:
+                    graph2_init_state={
+                        "messages": result['messages'],
+                        "thread_id": f"{customer.id}:{call_id}:lead",
+                        "customer_id":customer.id if customer else None,
+                        "customer_phone": os.getenv("MY_NUMBER"),
+                        "customer_email": "adityakumar81raj@gmail.com",
+                        "current_transcript": result['current_transcript'],
+                        "current_response": result['current_response'],
+                        "actions":{"whatsapp_sent_mid_call":lead_update['actions']['whatsapp_sent_mid_call'], "callback_scheduled": lead_update['actions']['callback_scheduled']},
+                        "callback":{"callback_situation": lead_update['callback']['callback_situation']}
+                    }
 
-        async with AsyncPostgresSaver.from_conn_string(DB_URL) as checkpointer:
-            await checkpointer.setup()
+                    lead_update= await graph2.ainvoke(graph2_init_state, config=GRAPH2_CONFIG)
 
-            graph1= builder1.compile(checkpointer=checkpointer)
-            graph2= builder2.compile(checkpointer=checkpointer)
+                    print(f"\nLead updatelead_update{lead_update}\n\n")
 
-            result= await graph1.ainvoke(graph1_init_state, config=GRAPH1_CONFIG)
+                    if lead_update['callback']['callback_situation']:
+                        callback_message= lead_update['callback']['callback_situation']
 
-            print(f"Current User Transcript: {result['current_transcript']}\n")
-            print(f"Current Ai Response: {result['current_response']}\n\n")
-            print(result)
-            
+                    callback_requested=lead_update['callback']['requested']
+                    email_sent_mid_call=lead_update['actions']['whatsapp_sent_mid_call']
+                    callback_scheduled =lead_update['actions']['callback_scheduled']
 
-            if not result['should_continue']:
-                break
+                    if lead_update['actions']['whatsapp_sent_mid_call'] and lead_update['actions']['callback_scheduled']:
+                        find_lead_flag=False
 
-            if result and find_lead_flag:
-                graph2_init_state={
-                    "messages": result['messages'],
-                    "thread_id": f"{customer.id}:{call_id}:lead",
-                    "customer_id":customer.id if customer else None,
-                    "customer_phone": os.getenv("MY_NUMBER"),
-                    "customer_email": "adityakumar81raj@gmail.com",
-                    "current_transcript": result['current_transcript'],
-                    "current_response": result['current_response'],
-                    "actions":{"whatsapp_sent_mid_call":lead_update['actions']['whatsapp_sent_mid_call'], "callback_scheduled": lead_update['actions']['callback_scheduled']},
-                    "callback":{"callback_situation": lead_update['callback']['callback_situation']}
-                }
+        except KeyboardInterrupt:
 
-                lead_update= await graph2.ainvoke(graph2_init_state, config=GRAPH2_CONFIG)
+            print(
+                "\nStopping assistant."
+            )
 
-                print(f"\nLead updatelead_update{lead_update}\n\n")
+            break
 
-                if lead_update['callback']['callback_situation']:
-                    callback_message= lead_update['callback']['callback_situation']
+        except Exception as e:
 
-                callback_requested=lead_update['callback']['requested']
-                email_sent_mid_call=lead_update['actions']['whatsapp_sent_mid_call']
-                callback_scheduled =lead_update['actions']['callback_scheduled']
-
-                if lead_update['actions']['whatsapp_sent_mid_call'] and lead_update['actions']['callback_scheduled']:
-                    find_lead_flag=False
+            print(
+                f"\nError: {e}"
+            )
 
     final_result= await after_call_email(lead_update)
 
     print(final_result)
-    
+
 
 
 

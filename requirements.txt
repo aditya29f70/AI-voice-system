@@ -60,3 +60,10 @@ apscheduler
 sqlalchemy
 asyncpg
 langgraph-checkpoint-postgres
+
+
+numpy
+torch
+torchaudio
+silero-vad
+soundfile

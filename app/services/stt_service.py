@@ -37,24 +37,65 @@ if sys.platform == "win32":
 print("cuBLAS:", cublas_path)
 print("cuDNN:", cudnn_path)
 
+
+import tempfile
+
+from scipy.io.wavfile import write
+
 from faster_whisper import WhisperModel
 
 
 class STTService:
 
     def __init__(self):
-        self.model= WhisperModel(
-            'small',
+
+        self.model = WhisperModel(
+            "small",
             device="cuda",
-            compute_type='float16'
+            compute_type="float16",
         )
 
-    def transcribe(self, audio_path:str)-> str:
-        segments, info= self.model.transcribe(
-            audio_path,
-            beam_size=5
-        )
+    def transcribe(
+        self,
+        audio,
+        sample_rate=16000,
+    ):
 
-        text= " ".join(segment.text for segment in segments)
+        temp_path = None
 
-        return text.strip()
+        try:
+
+            # Create temporary WAV file
+            with tempfile.NamedTemporaryFile(
+                suffix=".wav",
+                delete=False,
+            ) as temp:
+
+                temp_path = temp.name
+
+            write(
+                temp_path,
+                sample_rate,
+                audio,
+            )
+
+            segments, info = self.model.transcribe(
+                temp_path,
+                beam_size=5,
+                vad_filter=True,
+            )
+
+            text = " ".join(
+                segment.text
+                for segment in segments
+            )
+
+            return text.strip()
+
+        finally:
+
+            if temp_path and os.path.exists(
+                temp_path
+            ):
+
+                os.remove(temp_path)

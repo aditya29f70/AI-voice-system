@@ -13,3 +13,5 @@ def speech_to_text(state):
         "messages": [HumanMessage(content=transcript)],
         "current_transcript": transcript
     }
+
+## now in use for now
